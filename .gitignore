@@ -5,6 +5,9 @@
 # gitignore template for Jupyter Notebooks
 # website: http://jupyter.org/
 
+email/
+api/
+
 .ipynb_checkpoints
 */.ipynb_checkpoints/*
 
@@ -23,7 +26,7 @@ __pycache__/
 
 # C extensions
 *.so
-email/
+
 # Distribution / packaging
 .Python
 build/
