@@ -1,0 +1,88 @@
+import pandas as pd
+import numpy as np
+import pvlib
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import ExtraTreesRegressor
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.model_selection import GridSearchCV
+from sklearn.svm import SVR
+
+
+def clear_sky_model_pred(longitude, latitude, capacity, weather):
+    """
+    input :
+        longitude : 경도
+        latitude : 위도
+        capacity : 용량(단위 : w)
+        weather : 날씨 데이터 (index가 날짜인 데이터)
+    output :
+        cs : ghi, dni, dhi
+        generation : 발전량
+    """
+    location = pvlib.location.Location(latitude, longitude, tz='Asia/Seoul')
+    start_date = weather.index.min()
+    end_date = weather.index.max()
+
+    # 시간대가 Asia/Seoul로 설정되어 있는지 확인하고, 아니라면 설정한다.
+    if weather.index.tz is None or weather.index.tz.zone != 'Asia/Seoul':
+        weather = weather.tz_localize('Asia/Seoul')
+
+    times = pd.date_range(start=start_date, end=end_date, freq='1H', tz='Asia/Seoul')
+    solpos = location.get_solarposition(times=times)
+    dni_extra = pvlib.irradiance.get_extra_radiation(times)
+    airmass = pvlib.atmosphere.get_relative_airmass(solpos['apparent_zenith'])
+    pressure = pvlib.atmosphere.alt2pres(location.altitude)
+    am_abs = pvlib.atmosphere.get_absolute_airmass(airmass, pressure) 
+    tl = pvlib.clearsky.lookup_linke_turbidity(times, latitude, longitude)
+
+    solis_clearsky = pvlib.clearsky.simplified_solis(solpos['apparent_zenith'], am_abs, tl)
+    cs = location.get_clearsky(times, model='simplified_solis')
+    
+    # cs의 시간대를 None으로 설정
+    cs = cs.tz_localize(None)
+
+    system = pvlib.pvsystem.PVSystem(surface_tilt=30, surface_azimuth=180,
+                                    module_parameters={'pdc0': capacity, 'gamma_pdc': -0.004}, 
+                                    inverter_parameters={'pdc0': capacity},
+                                    modules_per_string=1, strings_per_inverter=1,
+                                    temperature_model_parameters={'a': -3.56, 'b': -0.075, 'deltaT': 3})
+    mc = pvlib.modelchain.ModelChain(system, location, spectral_model='no_loss', aoi_model='no_loss')
+
+    mc.run_model(pd.concat([solis_clearsky, weather], axis=1))
+
+    return cs, pd.DataFrame(mc.results.ac)
+
+
+class rf:
+    """
+    max depth : decision tree의 최대 깊이
+    n_estimators : 생성할 tree의 개수
+    learning_rate : 학습률
+    num_leves : 최대 leaf의 개수
+    Grid : GridSearchCV 사용 여부
+    """
+    
+    def __init__(self):
+        self.model = RandomForestRegressor()
+        self.depth = 5
+        self.n_estimators = 
+
+    def make(self):
+        rf = RandomForestRegressor(self.depth)
+        return rf
+    
+    def fit(self, x_train, y_train, Grid=False):
+
+        if Grid:
+            param_grid = {
+                'max_depth': max_depth,
+                'n_estimators': n_estimators,
+                'learning_rate': learning_rate,
+                'num_leaves': num_leves
+            }
+            grid_cv_rf = GridSearchCV(rf, param_grid=param_grid,
+                        cv=3, n_jobs=2)
+            grid_cv_rf.fit(x_train, y_train)
+        else:
+            model = LGBMRegressor(max_depth=max_depth, n_estimators=n_estimators, learning_rate=learning_rate, num_leaves=num_leves)
+        return model
