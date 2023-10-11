@@ -54,24 +54,30 @@ def clear_sky_model_pred(longitude, latitude, capacity, weather):
 
 
 class rf:
-    """
-    max depth : decision tree의 최대 깊이
-    n_estimators : 생성할 tree의 개수
-    learning_rate : 학습률
-    num_leves : 최대 leaf의 개수
-    Grid : GridSearchCV 사용 여부
-    """
-    
     def __init__(self):
         self.model = RandomForestRegressor()
         self.depth = 5
-        self.n_estimators = 
+        self.n_estimators = 100
 
     def make(self):
         rf = RandomForestRegressor(self.depth)
         return rf
     
-    def fit(self, x_train, y_train, Grid=False):
+    def fit(self, x_train, y_train, max_depth, n_estimators, learning_rate, num_leves, Grid=False):
+        """
+        x_train : 학습할 데이터
+        y_train : target
+        max depth : decision tree의 최대 깊이 
+        n_estimators : 생성할 tree의 개수
+        learning_rate : 학습률
+        num_leves : 최대 leaf의 개수
+        
+        Grid : GridSearchCV 사용 여부
+        Grid가 True일 경우, GridSearchCV를 사용하여 최적의 파라미터를 찾는다.
+        이때 parameter를 list으로 설정
+
+        Grid가 False인 경우, 설정된 상수 값으로 모델 생성
+        """
 
         if Grid:
             param_grid = {
@@ -83,6 +89,10 @@ class rf:
             grid_cv_rf = GridSearchCV(rf, param_grid=param_grid,
                         cv=3, n_jobs=2)
             grid_cv_rf.fit(x_train, y_train)
+
         else:
-            model = LGBMRegressor(max_depth=max_depth, n_estimators=n_estimators, learning_rate=learning_rate, num_leaves=num_leves)
+            model = RandomForestRegressor(max_depth=max_depth, n_estimators=n_estimators, learning_rate=learning_rate, num_leaves=num_leves)
+        
         return model
+    
+
