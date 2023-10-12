@@ -5,6 +5,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble import ExtraTreesRegressor
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.model_selection import GridSearchCV
+from sklearn.ensemble import AdaBoostRegressor
 from sklearn.svm import SVR
 
 
@@ -53,17 +54,20 @@ def clear_sky_model_pred(longitude, latitude, capacity, weather):
     return cs, pd.DataFrame(mc.results.ac)
 
 
-class rf:
+class tree:
     def __init__(self):
-        self.model = RandomForestRegressor()
-        self.depth = 5
-        self.n_estimators = 100
+        self.rf = None
+        self.dt = None
+        self.x_train = None
+        self.y_train = None
+        self.x_test = None
+        self.y_test = None
 
-    def make(self):
-        rf = RandomForestRegressor(self.depth)
-        return rf
-    
-    def fit(self, x_train, y_train, max_depth, n_estimators, learning_rate, num_leves, Grid=False):
+    def dt_depth(self, depth):
+        self.dt = DecisionTreeRegressor(max_depth=depth)
+
+
+    def rf_fit(self, max_depth = 5, n_estimators = 100, learning_rate = 0.01, num_leves = 8, Grid=False):
         """
         x_train : 학습할 데이터
         y_train : target
@@ -78,6 +82,7 @@ class rf:
 
         Grid가 False인 경우, 설정된 상수 값으로 모델 생성
         """
+        self.rf = RandomForestRegressor()
 
         if Grid:
             param_grid = {
@@ -86,13 +91,53 @@ class rf:
                 'learning_rate': learning_rate,
                 'num_leaves': num_leves
             }
-            grid_cv_rf = GridSearchCV(rf, param_grid=param_grid,
-                        cv=3, n_jobs=2)
-            grid_cv_rf.fit(x_train, y_train)
+            grid_cv_rf = GridSearchCV(self.rf, param_grid=param_grid,
+                        cv=5, n_jobs=-1)
+            model = grid_cv_rf.fit(self.x_train, self.y_train)
 
         else:
-            model = RandomForestRegressor(max_depth=max_depth, n_estimators=n_estimators, learning_rate=learning_rate, num_leaves=num_leves)
+            model = self.rf.fit(self.x_train, self.y_train, max_depth=max_depth, n_estimators=n_estimators, learning_rate=learning_rate, num_leaves=num_leves)
         
         return model
     
+    def rf_pred(self, x_test):
+        """
+        x_test : 예측할 데이터
+        """
+        return self.rf.predict(x_test)
+    
+    def ada_fit(self, max_depth = 5, n_estimators = 100, learning_rate = 0.01, Grid=False):
+        """
+        x_train : 학습할 데이터
+        y_train : target
+        max depth : decision tree의 최대 깊이 
+        n_estimators : 생성할 tree의 개수
+        learning_rate : 학습률
+        
+        Grid : GridSearchCV 사용 여부
+        Grid가 True일 경우, GridSearchCV를 사용하여 최적의 파라미터를 찾는다.
+        이때 parameter를 list으로 설정
+
+        Grid가 False인 경우, 설정된 상수 값으로 모델 생성
+        """
+        self.ada = AdaBoostRegressor()
+
+        if Grid:
+            if max_depth.dtype & n_estimators.dtype & learning_rate.dtype != list:
+                raise ValueError("one vlaue must be list")
+            param_grid = {
+                'max_depth': max_depth,
+                'n_estimators': n_estimators,
+                'learning_rate': learning_rate
+            }
+            grid_cv_ada = GridSearchCV(self.ada, param_grid=param_grid,
+                        cv=5, n_jobs=-1)
+            model = grid_cv_ada.fit(self.x_train, self.y_train)
+
+        else:
+            model = self.ada.fit(self.x_train, self.y_train, max_depth=max_depth, n_estimators=n_estimators, learning_rate=learning_rate)
+        
+        return model
+    
+
 
