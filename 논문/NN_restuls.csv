@@ -1,0 +1,11 @@
+dataset,model,config,epochs,R2,MAE
+none,CNN,"lb=12, ch=[64, 128], k=5",300,0.8928234577178955,269.27508544921875
+none,DNN,"h=[256, 128], drop=0.0",300,0.5113927125930786,663.5733032226562
+none,GRU,"lookback=24, kind=GRU, hid=128, layers=1, bi=True",300,0.9208418130874634,194.3050994873047
+none,LSTM,"lookback=12, kind=LSTM, hid=128, layers=1, bi=True",300,0.9059277176856995,218.5137176513672
+none,RNN,"lookback=24, kind=RNN, hid=128, layers=2, bi=True",300,0.9029549956321716,203.87095642089844
+physics,CNN,"lb=24, ch=[64, 128], k=5",300,0.9130704402923584,246.4230194091797
+physics,DNN,"h=[256, 128], drop=0.0",300,0.899169385433197,224.69873046875
+physics,GRU,"lookback=12, kind=GRU, hid=128, layers=1, bi=True",300,0.930002748966217,169.3671417236328
+physics,LSTM,"lookback=24, kind=LSTM, hid=128, layers=1, bi=True",300,0.91578608751297,189.40599060058594
+physics,RNN,"lookback=12, kind=RNN, hid=128, layers=1, bi=True",300,0.9150627255439758,191.66827392578125
